@@ -16,7 +16,7 @@ def clean_and_deduplicate_text(raw_text):
     
     lines = [line.strip() for line in raw_text.split("\n") if line.strip() and line.strip() != "-"]
     garbage_keywords = [
-        "view more comments", "ดูความคิดเห็นเพิ่มเติม", PAGE_NAME.lower(),
+        "view more comments", "ดูความคิดเห็นเพิ่มเติม", "เทรดเดอร์หน้าหมีแต่ชอบหมา",
         "like", "comment", "share", "top fan", "see more", "see less", "just now", "all reactions",
         "ผู้ติดตาม", "ถูกใจ", "แชร์", "ความคิดเห็น", "ดูเพิ่มเติม", "all reactions:",
         "เขียนความคิดเห็น...", "write a comment...", "subscriber", "ผู้ติดตามตัวยง",
@@ -47,7 +47,6 @@ def clean_and_deduplicate_text(raw_text):
                 
     full_text = "\n\n".join(cleaned_lines)
     
-    # ตรวจสอบหากข้อความเบิ้ลซ้ำ 2 ท่อนเหมือนกันเป๊ะ (A + A)
     half = len(full_text) // 2
     if half > 15:
         first_half = full_text[:half].strip()
@@ -254,10 +253,27 @@ def main():
         except Exception:
             history_ids = []
 
+    # ป้องกันสแปมรอบแรก: บันทึกโพสต์ปัจจุบันเป็นประวัติเริ่มต้นทันที
+    if not history_ids:
+        print("[INFO] ไฟล์ประวัติยังว่างเปล่า กำลังบันทึกโพสต์ปัจจุบันเป็นฐานข้อมูลเริ่มต้น...")
+        for post in recent_posts:
+            history_ids.append(post["id"])
+        with open(STORAGE_FILE, "w", encoding="utf-8") as f:
+            json.dump(history_ids, f, ensure_ascii=False, indent=2)
+        print("[INFO] เริ่มต้นระบบจำประวัติสำเร็จ (ไม่ส่งโพสต์เก่าย้อนหลัง)")
+        return
+
     new_posts_found = []
     for post in reversed(recent_posts):
         if post["id"] not in history_ids:
             new_posts_found.append(post)
+
+    # ป้องกันสแปม: ส่งไม่เกิน 2 โพสต์ล่าสุดต่อรอบ
+    if len(new_posts_found) > 2:
+        print(f"[WARNING] ตรวจพบโพสต์ใหม่ {len(new_posts_found)} โพสต์ (จะส่งเฉพาะ 2 โพสต์ล่าสุด)")
+        for p in new_posts_found[:-2]:
+            history_ids.append(p["id"])
+        new_posts_found = new_posts_found[-2:]
 
     if new_posts_found:
         print(f"[INFO] พบ {len(new_posts_found)} โพสต์ใหม่ กำลังส่งเข้า Discord...")
