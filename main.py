@@ -18,7 +18,7 @@ def clean_and_deduplicate_text(raw_text):
     garbage_keywords = [
         "view more comments", "ดูความคิดเห็นเพิ่มเติม", "เทรดเดอร์หน้าหมีแต่ชอบหมา",
         "like", "comment", "share", "top fan", "see more", "see less", "just now", "all reactions",
-        "ผู้ติดตาม", "ถูกใจ", "แชร์", "ความคิดเห็น", "ดูเพิ่มเติม", "all reactions:",
+        "ผู้ติดตาม", "ถูกใจ", "แชร์", "ความคิดเห็น", "ดูเพิ่มเติม", "ดูน้อยลง", "all reactions:",
         "เขียนความคิดเห็น...", "write a comment...", "subscriber", "ผู้ติดตามตัวยง"
     ]
     
@@ -43,7 +43,8 @@ def clean_and_deduplicate_text(raw_text):
         cleaned_lines.append(stripped)
 
     full_text = "\n\n".join(cleaned_lines)
-    full_text = re.sub(r"(\.\.\.)?\s*(See more|See less|ดูเพิ่มเติม)", "", full_text, flags=re.IGNORECASE).strip()
+    # เพิ่ม ดูน้อยลง เพื่อลบคำต่อท้ายทิ้ง 100%
+    full_text = re.sub(r"(\.\.\.)?\s*(See more|See less|ดูเพิ่มเติม|ดูน้อยลง|แก้ไขแล้ว)", "", full_text, flags=re.IGNORECASE).strip()
 
     paragraphs = [p.strip() for p in full_text.split("\n\n") if p.strip()]
     unique_paragraphs = []
@@ -116,7 +117,6 @@ def get_recent_posts():
         page = context.new_page()
         try:
             print(f"กำลังเปิดหน้าเพจ Facebook: [{PAGE_NAME}]...")
-            # แก้ไขเป็น domcontentloaded เพื่อไม่ให้ติด Timeout 45 วิ
             page.goto(PAGE_URL, wait_until="domcontentloaded", timeout=45000)
             page.wait_for_timeout(4000)
 
@@ -157,7 +157,7 @@ def get_recent_posts():
                                 text = textBlocks.join('\\n\\n');
                             }
 
-                            text = text.replace(/(\\.\\.\\.)?\\s*(See more|See less|ดูเพิ่มเติม)/gi, '').trim();
+                            text = text.replace(/(\\.\\.\\.)?\\s*(See more|See less|ดูเพิ่มเติม|ดูน้อยลง|แก้ไขแล้ว)/gi, '').trim();
 
                             let imgUrl = null;
                             const img = art.querySelector('img[src*="fbcdn"]');
