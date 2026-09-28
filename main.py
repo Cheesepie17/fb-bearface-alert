@@ -116,8 +116,9 @@ def get_recent_posts():
         page = context.new_page()
         try:
             print(f"กำลังเปิดหน้าเพจ Facebook: [{PAGE_NAME}]...")
-            page.goto(PAGE_URL, wait_until="networkidle", timeout=45000)
-            page.wait_for_timeout(3000)
+            # แก้ไขเป็น domcontentloaded เพื่อไม่ให้ติด Timeout 45 วิ
+            page.goto(PAGE_URL, wait_until="domcontentloaded", timeout=45000)
+            page.wait_for_timeout(4000)
 
             for step in range(8):
                 extracted = page.evaluate("""
@@ -187,7 +188,7 @@ def get_recent_posts():
                                 "url": PAGE_URL
                             }
 
-                print(f"📍 สเต็ปที่ {step+1}: กวาดพบสะสมแล้ว {len(collected_posts)} โพสต์")
+                print(f"📍 สเต็ปที่ {step+1}: กวาดพบสะสม {len(collected_posts)} โพสต์")
 
                 page.mouse.wheel(0, 2500)
                 page.keyboard.press("PageDown")
